@@ -21,6 +21,20 @@ impl Message {
         &self.body
     }
 
+    pub fn echo_ok(self) -> Self {
+        Message {
+            id: self.id,
+            src: self.dest,
+            dest: self.src,
+            body: Body::EchoOk {
+                type_: "echo_ok".to_string(),
+                msg_id: self.body.msg_id(),
+                in_reply_to: self.body.msg_id(),
+                echo: self.body.echo().to_string(),
+            },
+        }
+    }
+
     pub(crate) fn init_ok(node: &str, dest: &str, msg_id: usize) -> Self {
         Message {
             id: 1,
