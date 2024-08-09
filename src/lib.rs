@@ -28,7 +28,6 @@ impl Message {
             src: self.dest,
             dest: self.src,
             body: Body::EchoOk {
-                type_: "echo_ok".to_string(),
                 msg_id: self.body.msg_id(),
                 in_reply_to: self.body.msg_id(),
                 echo: self.body.echo().to_string(),
@@ -52,7 +51,6 @@ impl Message {
             src: node.to_string(),
             dest: dest.to_string(),
             body: Body::InitReply {
-                type_: "init_ok".to_string(),
                 in_reply_to: msg_id,
             },
         }
@@ -60,41 +58,35 @@ impl Message {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(untagged)]
+#[serde(tag = "type")]
 pub enum Body {
+    #[serde(rename = "echo")]
     Echo {
-        #[serde(rename = "type")]
-        type_: String,
         msg_id: usize,
         echo: String,
     },
+    #[serde(rename = "echo_ok")]
     EchoOk {
-        #[serde(rename = "type")]
-        type_: String,
         msg_id: usize,
         in_reply_to: usize,
         echo: String,
     },
+    #[serde(rename = "init")]
     Init {
-        #[serde(rename = "type")]
-        type_: String,
         node_id: String,
         node_ids: Vec<String>,
         msg_id: usize,
     },
+    #[serde(rename = "init_ok")]
     InitReply {
-        #[serde(rename = "type")]
-        type_: String,
         in_reply_to: usize,
     },
+    #[serde(rename = "generate")]
     Generate {
-        #[serde(rename = "type")]
-        type_: String,
         msg_id: usize,
     },
+    #[serde(rename = "generate_ok")]
     GenerateOk {
-        #[serde(rename = "type")]
-        type_: String,
         in_reply_to: usize,
         msg_id: usize,
         id: uuid::Uuid,
@@ -102,22 +94,23 @@ pub enum Body {
 }
 
 impl Body {
-    fn type_(&self) -> &str {
-        match self {
-            Body::Echo { type_, .. } => type_,
-            Body::EchoOk { type_, .. } => type_,
-            Body::Init { type_, .. } => type_,
-            Body::InitReply { type_, in_reply_to } => todo!(),
-            Body::Generate { type_, .. } => type_,
-            Body::GenerateOk { type_, .. } => type_,
-        }
-    }
+    // fn type_(&self) -> &str {
+    //     match self {
+    //         Body::Echo { type_, .. } => type_,
+    //         Body::EchoOk { type_, .. } => type_,
+    //         Body::Init { type_, .. } => type_,
+    //         Body::InitReply { type_, in_reply_to } => todo!(),
+    //         Body::Generate { type_, .. } => type_,
+    //         Body::GenerateOk { type_, .. } => type_,
+    //     }
+    // }
+
     pub(crate) fn msg_id(&self) -> usize {
         match self {
             Body::Echo { msg_id, .. } => *msg_id,
             Body::EchoOk { msg_id, .. } => *msg_id,
             Body::Init { msg_id, .. } => *msg_id,
-            Body::InitReply { type_, in_reply_to } => todo!(),
+            Body::InitReply {..} => todo!(),
             Body::Generate { msg_id, .. } => *msg_id,
             Body::GenerateOk { msg_id, .. } => *msg_id,
         }
@@ -137,7 +130,6 @@ impl Body {
     pub fn echo_ok(&mut self) {
         if let Body::Echo { .. } = self {
             *self = Body::EchoOk {
-                type_: "echo_ok".to_string(),
                 msg_id: self.msg_id(),
                 in_reply_to: self.msg_id(),
                 echo: self.echo().to_string(),
@@ -149,7 +141,6 @@ impl Body {
         if let Body::Generate { .. } = self {
             let id = Uuid::new_v4();
             *self = Body::GenerateOk {
-                type_: "generate_ok".to_string(),
                 in_reply_to: self.msg_id(),
                 msg_id: self.msg_id(),
                 id,
