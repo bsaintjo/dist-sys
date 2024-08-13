@@ -1,6 +1,5 @@
 use std::{
-    io::{self, BufRead, StdinLock},
-    ops::DerefMut,
+    io::{self},
     sync::Arc,
 };
 
@@ -10,24 +9,8 @@ use smol::{
     lock::Mutex,
     Unblock,
 };
-use tracing::{info, instrument};
+use tracing::instrument;
 use tracing_subscriber::FmtSubscriber;
-
-// fn run(stdin: &mut StdinLock) -> io::Result<()> {
-//     log::debug!("NEW MSG");
-//     let mut buffer = String::new();
-//     stdin.read_line(&mut buffer)?;
-//     log::debug!("BUFFER {buffer}");
-//     let msg: Message = serde_json::from_str(&buffer)?;
-//     log::debug!("MSG RECV {msg:?}");
-//     let echo = msg.echo_ok();
-//     log::debug!("MSG ECHO_OK: {echo:?}");
-//     let reply = serde_json::to_string(&echo)?;
-//     log::debug!("MSG ECHO_OK REPLY: {reply}");
-//     println!("{reply}");
-//     log::debug!("END MSG");
-//     Ok(())
-// }
 
 async fn run() -> smol::io::Result<()> {
     let stdin = Arc::new(Mutex::new(BufReader::new(Unblock::new(io::stdin()))));
@@ -70,7 +53,7 @@ async fn init<R: AsyncBufReadExt + Unpin, W: AsyncWriteExt + Unpin>(
     tracing::info!(reply = reply);
     {
         let mut stdout = stdout.lock_arc().await;
-        stdout.write_all(reply.as_bytes());
+        stdout.write_all(reply.as_bytes()).await?;
     }
     Ok(())
 }
