@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
 mod init;
@@ -41,7 +43,7 @@ impl Message {
             id: self.id,
             src: self.dest,
             dest: self.src,
-            body: self.body
+            body: self.body,
         }
     }
 
@@ -61,10 +63,7 @@ impl Message {
 #[serde(tag = "type")]
 pub enum Body {
     #[serde(rename = "echo")]
-    Echo {
-        msg_id: usize,
-        echo: String,
-    },
+    Echo { msg_id: usize, echo: String },
     #[serde(rename = "echo_ok")]
     EchoOk {
         msg_id: usize,
@@ -78,19 +77,33 @@ pub enum Body {
         msg_id: usize,
     },
     #[serde(rename = "init_ok")]
-    InitReply {
-        in_reply_to: usize,
-    },
+    InitReply { in_reply_to: usize },
     #[serde(rename = "generate")]
-    Generate {
-        msg_id: usize,
-    },
+    Generate { msg_id: usize },
     #[serde(rename = "generate_ok")]
     GenerateOk {
         in_reply_to: usize,
         msg_id: usize,
         id: uuid::Uuid,
     },
+    #[serde(rename = "broadcast")]
+    Broadcast { message: usize },
+    #[serde(rename = "broadcast_ok")]
+    BroadcastOk,
+
+    #[serde(rename = "read")]
+    Read,
+
+    #[serde(rename = "read_ok")]
+    ReadOk { messages: Vec<usize> },
+
+    #[serde(rename = "topology")]
+    Topology {
+        topology: HashMap<String, Vec<String>>,
+    },
+
+    #[serde(rename = "topology_ok")]
+    TopologyOk,
 }
 
 impl Body {
@@ -110,7 +123,7 @@ impl Body {
             Body::Echo { msg_id, .. } => *msg_id,
             Body::EchoOk { msg_id, .. } => *msg_id,
             Body::Init { msg_id, .. } => *msg_id,
-            Body::InitReply {..} => todo!(),
+            Body::InitReply { .. } => todo!(),
             Body::Generate { msg_id, .. } => *msg_id,
             Body::GenerateOk { msg_id, .. } => *msg_id,
         }
